@@ -1,0 +1,6 @@
+{
+  "name": "MathClass Pro - Sổ Điểm & Kỷ Luật Toán THPT",
+  "description": "Ứng dụng số hóa quản lý điểm số, đánh giá hành vi theo thời gian thực và trợ lý AI cho giáo viên Toán THPT.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
