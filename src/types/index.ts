@@ -55,6 +55,8 @@ export interface MathQuestion {
 
 export interface AppSettings {
   apiKey: string;
+  agentPlatformApiKey: string;
+  aiProvider: 'gemini' | 'agent-platform';
   selectedModel: string;
   soundEnabled: boolean;
   autoSave: boolean;

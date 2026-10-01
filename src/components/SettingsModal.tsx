@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { AppSettings } from '../types';
 import { storage } from '../services/storage';
+import { isValidGoogleAiApiKey } from '../services/gemini';
 import { 
   X, 
   Key, 
@@ -15,8 +16,27 @@ import {
   Cpu, 
   Volume2, 
   ShieldCheck,
-  FileJson
+  FileJson,
+  AlertTriangle
 } from 'lucide-react';
+
+// Danh sách model Gemini API (GA/stable)
+const GEMINI_API_MODELS = [
+  { value: 'gemini-3.6-flash', label: 'gemini-3.6-flash (Mặc định — Mới nhất, tối ưu Toán THPT)' },
+  { value: 'gemini-3.5-flash', label: 'gemini-3.5-flash (Dự phòng chất lượng cao)' },
+  { value: 'gemini-3.5-flash-lite', label: 'gemini-3.5-flash-lite (Nhanh, chi phí thấp)' },
+  { value: 'gemini-3.1-flash-lite', label: 'gemini-3.1-flash-lite (Tương thích ngược)' },
+  { value: 'gemini-2.5-pro', label: 'gemini-2.5-pro (Suy luận mạnh — Phân tích giáo án)' },
+  { value: 'gemini-2.5-flash', label: 'gemini-2.5-flash (Dự phòng cuối chuỗi)' },
+];
+
+// Danh sách model Agent Platform API
+const AGENT_PLATFORM_MODELS = [
+  { value: 'gemini-2.5-flash', label: 'gemini-2.5-flash (Mặc định Agent Platform)' },
+  { value: 'gemini-2.5-flash-lite', label: 'gemini-2.5-flash-lite (Chi phí thấp)' },
+  { value: 'gemini-2.5-pro', label: 'gemini-2.5-pro (Suy luận mạnh)' },
+  { value: 'gemini-3.1-pro-preview', label: 'gemini-3.1-pro-preview (Preview)' },
+];
 
 interface SettingsModalProps {
   settings: AppSettings;
@@ -33,16 +53,52 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onResetData,
   onImportData
 }) => {
-  const [apiKey, setApiKey] = useState(settings.apiKey || '');
+  const [provider, setProvider] = useState<'gemini' | 'agent-platform'>(settings.aiProvider || 'gemini');
+  const [geminiKey, setGeminiKey] = useState(settings.apiKey || '');
+  const [agentPlatformKey, setAgentPlatformKey] = useState(settings.agentPlatformApiKey || '');
   const [showKey, setShowKey] = useState(false);
-  const [model, setModel] = useState(settings.selectedModel || 'gemini-3-flash-preview');
+  const [model, setModel] = useState(settings.selectedModel || 'gemini-3.6-flash');
   const [soundEnabled, setSoundEnabled] = useState(settings.soundEnabled);
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [keyError, setKeyError] = useState('');
+
+  // Key hiện tại theo provider đang chọn
+  const currentKey = provider === 'gemini' ? geminiKey : agentPlatformKey;
+  const setCurrentKey = provider === 'gemini' ? setGeminiKey : setAgentPlatformKey;
+  const currentModels = provider === 'gemini' ? GEMINI_API_MODELS : AGENT_PLATFORM_MODELS;
+
+  // Khi đổi provider: chuyển model về mặc định nếu model cũ không tương thích
+  const handleProviderChange = (newProvider: 'gemini' | 'agent-platform') => {
+    setProvider(newProvider);
+    const modelList = newProvider === 'gemini' ? GEMINI_API_MODELS : AGENT_PLATFORM_MODELS;
+    if (!modelList.some(m => m.value === model)) {
+      setModel(modelList[0].value);
+    }
+    setKeyError('');
+  };
+
+  // Validate key khi nhập
+  const handleKeyChange = (value: string) => {
+    setCurrentKey(value);
+    if (value.trim() && !isValidGoogleAiApiKey(value)) {
+      setKeyError('API Key phải bắt đầu bằng AIzaSy... hoặc AQ... và dài ít nhất 10 ký tự.');
+    } else {
+      setKeyError('');
+    }
+  };
 
   const handleSave = () => {
+    // Validate nếu có key
+    if (currentKey.trim() && !isValidGoogleAiApiKey(currentKey)) {
+      setKeyError('API Key không hợp lệ. Key phải bắt đầu bằng AIzaSy... hoặc AQ...');
+      return;
+    }
+
     onSaveSettings({
       ...settings,
-      apiKey,
+      apiKey: geminiKey,
+      agentPlatformApiKey: agentPlatformKey,
+      aiProvider: provider,
       selectedModel: model,
       soundEnabled
     });
@@ -106,24 +162,59 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </button>
         </div>
 
-        {/* Section 1: Gemini AI Config */}
+        {/* Section 1: Provider Selection */}
+        <div className="space-y-4">
+          <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+            <Cpu className="w-3.5 h-3.5 text-blue-600" />
+            <span>Chọn nhà cung cấp AI</span>
+          </h3>
+
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={() => handleProviderChange('gemini')}
+              className={`p-3 rounded-xl border-2 text-left transition-all ${
+                provider === 'gemini'
+                  ? 'border-blue-500 bg-blue-50 shadow-sm'
+                  : 'border-slate-200 bg-white hover:border-slate-300'
+              }`}
+            >
+              <div className="text-xs font-bold text-slate-800">🔷 Gemini API</div>
+              <div className="text-[10px] text-slate-500 mt-0.5">Google AI Studio • Miễn phí</div>
+            </button>
+            <button
+              onClick={() => handleProviderChange('agent-platform')}
+              className={`p-3 rounded-xl border-2 text-left transition-all ${
+                provider === 'agent-platform'
+                  ? 'border-purple-500 bg-purple-50 shadow-sm'
+                  : 'border-slate-200 bg-white hover:border-slate-300'
+              }`}
+            >
+              <div className="text-xs font-bold text-slate-800">🟣 Agent Platform API</div>
+              <div className="text-[10px] text-slate-500 mt-0.5">Google Cloud • Trả phí</div>
+            </button>
+          </div>
+        </div>
+
+        {/* Section 2: API Key */}
         <div className="space-y-4">
           <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
             <Key className="w-3.5 h-3.5 text-blue-600" />
-            <span>Cấu hình Gemini API Key</span>
+            <span>Cấu hình {provider === 'gemini' ? 'Gemini' : 'Agent Platform'} API Key</span>
           </h3>
 
           <div className="space-y-2">
             <label className="text-xs font-semibold text-slate-700 block">
-              Google Gemini API Key (Tùy chọn):
+              {provider === 'gemini' ? 'Google Gemini' : 'Agent Platform'} API Key:
             </label>
             <div className="relative">
               <input
                 type={showKey ? 'text' : 'password'}
-                placeholder="Nhập API Key nếu bạn có key riêng (hoặc để trống để dùng key mặc định từ server)"
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                className="w-full pl-3 pr-10 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
+                placeholder="Nhập API Key (AIzaSy... hoặc AQ...)"
+                value={currentKey}
+                onChange={(e) => handleKeyChange(e.target.value)}
+                className={`w-full pl-3 pr-10 py-2.5 text-xs bg-slate-50 border rounded-xl focus:outline-none focus:ring-2 focus:bg-white ${
+                  keyError ? 'border-red-300 focus:ring-red-400' : 'border-slate-200 focus:ring-blue-500'
+                }`}
               />
               <button
                 type="button"
@@ -133,9 +224,19 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
+            {keyError && (
+              <p className="text-[11px] text-red-500 flex items-center gap-1">
+                <AlertTriangle className="w-3.5 h-3.5" />
+                <span>{keyError}</span>
+              </p>
+            )}
             <p className="text-[11px] text-slate-500 flex items-center gap-1">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Nếu server đã cấu hình GEMINI_API_KEY, bạn có thể để trống và sử dụng ngay lập tức.</span>
+              <span>
+                {provider === 'gemini' 
+                  ? 'Lấy key tại aistudio.google.com/apikey. Để trống nếu server đã cấu hình.' 
+                  : 'Lấy key tại Google Cloud Console (Agent Platform API).'}
+              </span>
             </p>
           </div>
 
@@ -148,14 +249,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               onChange={(e) => setModel(e.target.value)}
               className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="gemini-3-flash-preview">gemini-3-flash-preview (Mặc định: Nhanh, tối ưu Toán THPT)</option>
-              <option value="gemini-3-pro-preview">gemini-3-pro-preview (Lý luận sâu, toán chuyên & vận dụng cao)</option>
-              <option value="gemini-2.5-flash">gemini-2.5-flash (Dự phòng)</option>
+              {currentModels.map(m => (
+                <option key={m.value} value={m.value}>{m.label}</option>
+              ))}
             </select>
           </div>
         </div>
 
-        {/* Section 2: App Preferences */}
+        {/* Section 3: App Preferences */}
         <div className="space-y-3 pt-3 border-t border-slate-100">
           <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
             <Volume2 className="w-3.5 h-3.5 text-slate-600" />
@@ -176,7 +277,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </div>
         </div>
 
-        {/* Section 3: Data Management */}
+        {/* Section 4: Data Management */}
         <div className="space-y-3 pt-3 border-t border-slate-100">
           <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
             <FileJson className="w-3.5 h-3.5 text-slate-600" />

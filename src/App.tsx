@@ -30,7 +30,7 @@ export default function App() {
   const [students, setStudents] = useState<Student[]>([]);
   const [behaviors, setBehaviors] = useState<BehaviorRecord[]>([]);
   const [questions, setQuestions] = useState<MathQuestion[]>([]);
-  const [settings, setSettings] = useState<AppSettings>({ apiKey: '', selectedModel: '', soundEnabled: false, autoSave: true, defaultClassId: '' });
+  const [settings, setSettings] = useState<AppSettings>({ apiKey: '', agentPlatformApiKey: '', aiProvider: 'gemini', selectedModel: '', soundEnabled: false, autoSave: true, defaultClassId: '' });
 
   // Load data khi khởi động
   useEffect(() => {

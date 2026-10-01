@@ -1,18 +1,33 @@
 import { Student, MathQuestion, BehaviorRecord } from '../types';
 import { calculateMathGPA, getAcademicRank } from './storage';
 
-const FALLBACK_MODELS = ['gemini-3-flash-preview', 'gemini-3-pro-preview', 'gemini-2.5-flash'];
+// Chuỗi model fallback GA/stable theo api.md
+const FALLBACK_MODELS = [
+  'gemini-3.6-flash',
+  'gemini-3.5-flash',
+  'gemini-3.5-flash-lite',
+  'gemini-3.1-flash-lite',
+  'gemini-2.5-flash',
+];
+
+// Validation: chấp nhận cả key AIzaSy... và AQ...
+export const GOOGLE_AI_API_KEY_PATTERN = /^(?:AIzaSy|AQ)\S{8,}$/;
+
+export const isValidGoogleAiApiKey = (key: string): boolean => {
+  return GOOGLE_AI_API_KEY_PATTERN.test(key.trim());
+};
 
 interface CallAIOptions {
   prompt: string;
   systemInstruction?: string;
   customApiKey?: string;
   preferredModel?: string;
+  provider?: 'gemini' | 'agent-platform';
 }
 
 export async function callGemini(options: CallAIOptions): Promise<string> {
   const modelsToTry = [
-    options.preferredModel || 'gemini-3-flash-preview',
+    options.preferredModel || 'gemini-3.6-flash',
     ...FALLBACK_MODELS.filter(m => m !== options.preferredModel)
   ];
 
@@ -27,7 +42,8 @@ export async function callGemini(options: CallAIOptions): Promise<string> {
           prompt: options.prompt,
           systemInstruction: options.systemInstruction,
           model,
-          customApiKey: options.customApiKey || undefined
+          customApiKey: options.customApiKey || undefined,
+          provider: options.provider || 'gemini'
         })
       });
 
@@ -35,11 +51,15 @@ export async function callGemini(options: CallAIOptions): Promise<string> {
         const errorData = await response.json().catch(() => ({}));
         const errorMsg = errorData.error || `HTTP ${response.status}`;
         lastError = errorMsg;
-        // If 401 or 403, key issue, break
+        // Auth/key issue: dừng ngay
         if (response.status === 401 || response.status === 403) {
           throw new Error('API Key không hợp lệ hoặc chưa được cấp quyền.');
         }
-        // If rate limit 429 or server error 500, try next model
+        // Quota exceeded: dừng ngay
+        if (response.status === 429) {
+          throw new Error('Đã hết quota hoặc vượt giới hạn tốc độ API. Vui lòng đợi rồi thử lại.');
+        }
+        // 503/500: thử model tiếp theo
         continue;
       }
 
@@ -49,7 +69,7 @@ export async function callGemini(options: CallAIOptions): Promise<string> {
       }
     } catch (err: any) {
       lastError = err.message;
-      if (err.message.includes('API Key')) {
+      if (err.message.includes('API Key') || err.message.includes('quota')) {
         throw err;
       }
     }
