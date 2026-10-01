@@ -1,11 +1,12 @@
 import { ClassRoom, Student, BehaviorRecord, MathQuestion, AppSettings } from '../types';
+import { getCurrentSchoolYear } from '../utils/schoolYear';
 
 export const initialClasses: ClassRoom[] = [
   {
     id: 'class-12a1',
     name: '12A1 - Chuyên Tự Nhiên',
     grade: 12,
-    schoolYear: '2025 - 2026',
+    schoolYear: getCurrentSchoolYear(),
     teacherName: 'Thầy Nguyễn Văn Nam (ThS. Toán)',
     room: 'Phòng 302 - Nhà A'
   },

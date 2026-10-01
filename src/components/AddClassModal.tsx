@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ClassRoom } from '../types';
+import { getCurrentSchoolYear } from '../utils/schoolYear';
 import { X, PlusCircle, Save } from 'lucide-react';
 
 interface AddClassModalProps {
@@ -13,7 +14,7 @@ export const AddClassModal: React.FC<AddClassModalProps> = ({
 }) => {
   const [name, setName] = useState('');
   const [grade, setGrade] = useState<10 | 11 | 12>(12);
-  const [schoolYear, setSchoolYear] = useState('2025 - 2026');
+  const [schoolYear, setSchoolYear] = useState(getCurrentSchoolYear());
   const [teacherName, setTeacherName] = useState('Thầy Nguyễn Văn Nam');
   const [room, setRoom] = useState('Phòng 301 - Nhà A');
 

@@ -131,6 +131,11 @@ export default function App() {
     setStudents(prev => [...prev, newStudent]);
   };
 
+  // Add multiple students (from import)
+  const handleAddStudents = (newStudents: Student[]) => {
+    setStudents(prev => [...prev, ...newStudents]);
+  };
+
   // Add new class
   const handleAddClass = (newClass: ClassRoom) => {
     setClasses(prev => [...prev, newClass]);
@@ -179,6 +184,7 @@ export default function App() {
         onTabChange={setActiveTab}
         onOpenSettings={() => setIsSettingsOpen(true)}
         onAddStudent={() => setIsAddStudentOpen(true)}
+        onAddStudents={handleAddStudents}
         onAddClass={() => setIsAddClassOpen(true)}
         soundEnabled={soundEnabled}
         onToggleSound={() => setSoundEnabled(!soundEnabled)}

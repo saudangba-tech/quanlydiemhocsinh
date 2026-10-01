@@ -1,5 +1,6 @@
-import React from 'react';
-import { ClassRoom } from '../types';
+import React, { useRef, useState } from 'react';
+import { ClassRoom, Student } from '../types';
+import { importStudentsFromFile } from '../utils/importStudents';
 import { 
   GraduationCap, 
   Settings, 
@@ -14,7 +15,8 @@ import {
   PlusCircle, 
   Volume2, 
   VolumeX,
-  UserCheck
+  UserCheck,
+  Upload
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -25,6 +27,7 @@ interface HeaderProps {
   onTabChange: (tab: string) => void;
   onOpenSettings: () => void;
   onAddStudent: () => void;
+  onAddStudents?: (students: Student[]) => void;
   onAddClass: () => void;
   soundEnabled: boolean;
   onToggleSound: () => void;
@@ -41,6 +44,7 @@ export const Header: React.FC<HeaderProps> = ({
   onTabChange,
   onOpenSettings,
   onAddStudent,
+  onAddStudents,
   onAddClass,
   soundEnabled,
   onToggleSound,
@@ -49,6 +53,31 @@ export const Header: React.FC<HeaderProps> = ({
   hasApiKey
 }) => {
   const currentClass = classes.find(c => c.id === selectedClassId) || classes[0];
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isImporting, setIsImporting] = useState(false);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setIsImporting(true);
+      const students = await importStudentsFromFile(file, selectedClassId);
+      if (students.length > 0) {
+        onAddStudents?.(students);
+        alert(`Đã nhập thành công ${students.length} học sinh!`);
+      } else {
+        alert('Không tìm thấy dữ liệu học sinh hợp lệ trong file.');
+      }
+    } catch (err: any) {
+      alert(`Lỗi khi nhập file: ${err.message}`);
+    } finally {
+      setIsImporting(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
 
   const navItems = [
     { id: 'live', label: 'Đánh giá tức thì', icon: Sparkles },
@@ -167,6 +196,21 @@ export const Header: React.FC<HeaderProps> = ({
 
         {isTeacherMode && (
           <div className="flex items-center gap-2">
+            <input
+              type="file"
+              accept=".csv,.json"
+              className="hidden"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+            />
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isImporting}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-lg text-xs font-semibold shadow-2xs transition-colors"
+            >
+              <Upload className="w-3.5 h-3.5" />
+              <span>{isImporting ? 'Đang nhập...' : 'Nhập từ file'}</span>
+            </button>
             <button
               onClick={onAddStudent}
               className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow-2xs transition-colors"
