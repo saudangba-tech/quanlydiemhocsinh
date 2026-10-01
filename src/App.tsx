@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { ClassRoom, Student, BehaviorRecord, MathQuestion, AppSettings } from './types';
 import { firebaseStorage } from './services/firebase-storage';
 import { useAuth } from './contexts/AuthContext';
-import { LoginScreen } from './components/LoginScreen';
 import { sound } from './services/sound';
 import { renderMathJax } from './utils/mathjax';
 
@@ -21,7 +20,7 @@ import { AddStudentModal } from './components/AddStudentModal';
 import { AddClassModal } from './components/AddClassModal';
 
 export default function App() {
-  const { user, loading: authLoading } = useAuth();
+  const { user } = useAuth();
 
   // State management
   const [isDataLoaded, setIsDataLoaded] = useState(false);
@@ -33,22 +32,18 @@ export default function App() {
   const [questions, setQuestions] = useState<MathQuestion[]>([]);
   const [settings, setSettings] = useState<AppSettings>({ apiKey: '', selectedModel: '', soundEnabled: false, autoSave: true, defaultClassId: '' });
 
-  // Load data on login
+  // Load data khi khởi động
   useEffect(() => {
-    if (user) {
-      firebaseStorage.loadTeacherData(user.uid).then(data => {
-        setClasses(data.classes);
-        if (data.classes.length > 0) setSelectedClassId(data.classes[0].id);
-        setStudents(data.students);
-        setBehaviors(data.behaviors);
-        setQuestions(data.questions);
-        setSettings(data.settings);
-        setIsDataLoaded(true);
-      }).catch(console.error);
-    } else {
-      setIsDataLoaded(false);
-    }
-  }, [user]);
+    firebaseStorage.loadTeacherData(user.uid).then(data => {
+      setClasses(data.classes);
+      if (data.classes.length > 0) setSelectedClassId(data.classes[0].id);
+      setStudents(data.students);
+      setBehaviors(data.behaviors);
+      setQuestions(data.questions);
+      setSettings(data.settings);
+      setIsDataLoaded(true);
+    }).catch(console.error);
+  }, []);
 
   // UI state
   const [activeTab, setActiveTab] = useState<string>('live');
@@ -84,24 +79,24 @@ export default function App() {
 
   // Persistence effects
   useEffect(() => {
-    if (isDataLoaded && user) firebaseStorage.saveFullData(user.uid, { classes });
-  }, [classes, isDataLoaded, user]);
+    if (isDataLoaded) firebaseStorage.saveFullData(user.uid, { classes });
+  }, [classes, isDataLoaded]);
 
   useEffect(() => {
-    if (isDataLoaded && user) firebaseStorage.saveFullData(user.uid, { students });
-  }, [students, isDataLoaded, user]);
+    if (isDataLoaded) firebaseStorage.saveFullData(user.uid, { students });
+  }, [students, isDataLoaded]);
 
   useEffect(() => {
-    if (isDataLoaded && user) firebaseStorage.saveFullData(user.uid, { behaviors });
-  }, [behaviors, isDataLoaded, user]);
+    if (isDataLoaded) firebaseStorage.saveFullData(user.uid, { behaviors });
+  }, [behaviors, isDataLoaded]);
 
   useEffect(() => {
-    if (isDataLoaded && user) firebaseStorage.saveFullData(user.uid, { questions });
-  }, [questions, isDataLoaded, user]);
+    if (isDataLoaded) firebaseStorage.saveFullData(user.uid, { questions });
+  }, [questions, isDataLoaded]);
 
   useEffect(() => {
-    if (isDataLoaded && user) firebaseStorage.saveFullData(user.uid, { settings });
-  }, [settings, isDataLoaded, user]);
+    if (isDataLoaded) firebaseStorage.saveFullData(user.uid, { settings });
+  }, [settings, isDataLoaded]);
 
   // Handlers for modifying students and behavior records
   const handleUpdateStudents = (updatedStudents: Student[]) => {
@@ -166,16 +161,8 @@ export default function App() {
     }
   };
 
-  if (authLoading) {
-    return <div className="min-h-screen flex items-center justify-center bg-slate-50"><i className="fa-solid fa-circle-notch fa-spin text-3xl text-blue-500"></i></div>;
-  }
-
-  if (!user) {
-    return <LoginScreen />;
-  }
-
   if (!isDataLoaded) {
-    return <div className="min-h-screen flex flex-col gap-4 items-center justify-center bg-slate-50"><i className="fa-solid fa-circle-notch fa-spin text-3xl text-blue-500"></i><p className="text-slate-500 font-medium">Đang đồng bộ dữ liệu lớp học...</p></div>;
+    return <div className="min-h-screen flex flex-col gap-4 items-center justify-center bg-slate-50"><i className="fa-solid fa-circle-notch fa-spin text-3xl text-blue-500"></i><p className="text-slate-500 font-medium">Đang tải dữ liệu lớp học...</p></div>;
   }
 
   // Current active class object

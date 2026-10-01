@@ -1,54 +1,27 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, onAuthStateChanged } from 'firebase/auth';
-import { auth, loginWithGoogle, logout } from '../services/firebase';
+import React, { createContext, useContext } from 'react';
 
 interface AuthContextType {
-  user: User | null;
+  user: { uid: string; displayName: string; email: string };
   loading: boolean;
-  login: () => Promise<void>;
-  logout: () => Promise<void>;
 }
 
+// User mặc định - không cần đăng nhập
+const defaultUser = {
+  uid: 'default-teacher',
+  displayName: 'Giáo viên Toán',
+  email: 'teacher@mathclass.pro'
+};
+
 const AuthContext = createContext<AuthContextType>({
-  user: null,
-  loading: true,
-  login: async () => {},
-  logout: async () => {},
+  user: defaultUser,
+  loading: false,
 });
 
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  const handleLogin = async () => {
-    try {
-      await loginWithGoogle();
-    } catch (error) {
-      console.error("Lỗi đăng nhập:", error);
-    }
-  };
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-    } catch (error) {
-      console.error("Lỗi đăng xuất:", error);
-    }
-  };
-
   return (
-    <AuthContext.Provider value={{ user, loading, login: handleLogin, logout: handleLogout }}>
+    <AuthContext.Provider value={{ user: defaultUser, loading: false }}>
       {children}
     </AuthContext.Provider>
   );
