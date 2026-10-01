@@ -1,0 +1,450 @@
+import { ClassRoom, Student, BehaviorRecord, MathQuestion, AppSettings } from '../types';
+import { getCurrentSchoolYear } from '../utils/schoolYear';
+
+export const initialClasses: ClassRoom[] = [
+  {
+    id: 'class-12a1',
+    name: '12A1 - Chuyên Tự Nhiên',
+    grade: 12,
+    schoolYear: getCurrentSchoolYear(),
+    teacherName: 'Thầy Nguyễn Văn Nam (ThS. Toán)',
+    room: 'Phòng 302 - Nhà A'
+  },
+  {
+    id: 'class-11b2',
+    name: '11B2 - Ban Khoa Học Tự Nhiên',
+    grade: 11,
+    schoolYear: '2025 - 2026',
+    teacherName: 'Cô Trần Thị Mai',
+    room: 'Phòng 204 - Nhà B'
+  },
+  {
+    id: 'class-10a1',
+    name: '10A1 - Lớp Chọn Toán Tin',
+    grade: 10,
+    schoolYear: '2025 - 2026',
+    teacherName: 'Thầy Nguyễn Văn Nam',
+    room: 'Phòng 105 - Nhà C'
+  }
+];
+
+export const initialStudents: Student[] = [
+  // Lớp 12A1
+  {
+    id: 'hs-1201',
+    classId: 'class-12a1',
+    name: 'Nguyễn Hoàng Minh',
+    code: 'HS1201',
+    gender: 'nam',
+    avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80',
+    role: 'Cán sự Toán',
+    parentName: 'Nguyễn Văn Hùng',
+    parentPhone: '0912345678',
+    tx1: 9.0,
+    tx2: 9.5,
+    tx3: 10.0,
+    tx4: 9.5,
+    gk: 9.2,
+    ck: 9.5,
+    behaviorScore: 118,
+    starCount: 14,
+    notes: 'Tư duy Toán học xuất sắc, đặc biệt mạnh phần Hình học không gian và Tích phân'
+  },
+  {
+    id: 'hs-1202',
+    classId: 'class-12a1',
+    name: 'Trần Mai Phương',
+    code: 'HS1202',
+    gender: 'nữ',
+    avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80',
+    role: 'Lớp trưởng',
+    parentName: 'Trần Thị Lan',
+    parentPhone: '0983456789',
+    tx1: 8.5,
+    tx2: 9.0,
+    tx3: 8.5,
+    tx4: 9.0,
+    gk: 8.8,
+    ck: 9.0,
+    behaviorScore: 112,
+    starCount: 11,
+    notes: 'Chăm chỉ, gương mẫu, hỗ trợ bạn bè rất tốt trong giờ bài tập'
+  },
+  {
+    id: 'hs-1203',
+    classId: 'class-12a1',
+    name: 'Lê Quốc Bảo',
+    code: 'HS1203',
+    gender: 'nam',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+    role: 'Học sinh',
+    parentName: 'Lê Văn Tuấn',
+    parentPhone: '0978123456',
+    tx1: 7.0,
+    tx2: 7.5,
+    tx3: 8.0,
+    tx4: 7.5,
+    gk: 7.8,
+    ck: 8.0,
+    behaviorScore: 104,
+    starCount: 6,
+    notes: 'Có tiến bộ rõ rệt ở phần Số phức và Hàm số'
+  },
+  {
+    id: 'hs-1204',
+    classId: 'class-12a1',
+    name: 'Phạm Thuỳ Dương',
+    code: 'HS1204',
+    gender: 'nữ',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+    role: 'Tổ trưởng',
+    parentName: 'Vũ Thị Thanh',
+    parentPhone: '0903987654',
+    tx1: 8.0,
+    tx2: 8.5,
+    tx3: 8.0,
+    tx4: 9.0,
+    gk: 8.5,
+    ck: 8.8,
+    behaviorScore: 108,
+    starCount: 8,
+    notes: 'Tính toán cẩn thận, trình bày bài tự luận mạch lạc'
+  },
+  {
+    id: 'hs-1205',
+    classId: 'class-12a1',
+    name: 'Vũ Đăng Khoa',
+    code: 'HS1205',
+    gender: 'nam',
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
+    role: 'Học sinh',
+    parentName: 'Vũ Mạnh Cường',
+    parentPhone: '0918765432',
+    tx1: 5.5,
+    tx2: 6.0,
+    tx3: 6.5,
+    tx4: 7.0,
+    gk: 6.0,
+    ck: 6.5,
+    behaviorScore: 92,
+    starCount: 3,
+    notes: 'Đôi khi còn mất tập trung, quên công thức đạo hàm cấp cao, cần rèn thêm'
+  },
+  {
+    id: 'hs-1206',
+    classId: 'class-12a1',
+    name: 'Đặng Thảo Linh',
+    code: 'HS1206',
+    gender: 'nữ',
+    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
+    role: 'Học sinh',
+    parentName: 'Đặng Quốc Huy',
+    parentPhone: '0934567890',
+    tx1: 9.0,
+    tx2: 8.5,
+    tx3: 9.5,
+    tx4: 9.0,
+    gk: 9.0,
+    ck: 9.2,
+    behaviorScore: 115,
+    starCount: 12,
+    notes: 'Học lực Toán rất vững vàng, tích cực đóng góp cách giải mới'
+  },
+  {
+    id: 'hs-1207',
+    classId: 'class-12a1',
+    name: 'Bùi Đức Anh',
+    code: 'HS1207',
+    gender: 'nam',
+    avatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150&auto=format&fit=crop&q=80',
+    role: 'Học sinh',
+    parentName: 'Bùi Văn Thành',
+    parentPhone: '0945678123',
+    tx1: 7.0,
+    tx2: 6.5,
+    tx3: 7.0,
+    tx4: 8.0,
+    gk: 7.2,
+    ck: 7.5,
+    behaviorScore: 97,
+    starCount: 4,
+    notes: 'Cần chú ý không nói chuyện riêng trong giờ sửa bài tập'
+  },
+  {
+    id: 'hs-1208',
+    classId: 'class-12a1',
+    name: 'Ngô Ngọc Ánh',
+    code: 'HS1208',
+    gender: 'nữ',
+    avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80',
+    role: 'Lớp phó',
+    parentName: 'Ngô Đình Trọng',
+    parentPhone: '0967890123',
+    tx1: 8.5,
+    tx2: 9.0,
+    tx3: 9.0,
+    tx4: 9.5,
+    gk: 9.0,
+    ck: 9.4,
+    behaviorScore: 110,
+    starCount: 10,
+    notes: 'Thực hành tính máy tính Casio rất nhanh và chính xác'
+  },
+  // Lớp 11B2
+  {
+    id: 'hs-1101',
+    classId: 'class-11b2',
+    name: 'Lý Gia Hưng',
+    code: 'HS1101',
+    gender: 'nam',
+    avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80',
+    role: 'Cán sự Toán',
+    parentName: 'Lý Quốc Đạt',
+    parentPhone: '0913987111',
+    tx1: 9.0,
+    tx2: 9.0,
+    tx3: 8.5,
+    tx4: 9.5,
+    gk: 9.0,
+    ck: 9.2,
+    behaviorScore: 114,
+    starCount: 9,
+    notes: 'Lượng giác và Dãy số rất vững vàng'
+  },
+  {
+    id: 'hs-1102',
+    classId: 'class-11b2',
+    name: 'Chu Ngọc Hà',
+    code: 'HS1102',
+    gender: 'nữ',
+    avatar: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=150&auto=format&fit=crop&q=80',
+    role: 'Lớp trưởng',
+    parentName: 'Chu Quang Minh',
+    parentPhone: '0981234777',
+    tx1: 8.0,
+    tx2: 8.5,
+    tx3: 8.0,
+    tx4: 8.5,
+    gk: 8.2,
+    ck: 8.5,
+    behaviorScore: 107,
+    starCount: 7,
+    notes: 'Gương mẫu, làm bài tập đầy đủ'
+  },
+  {
+    id: 'hs-1103',
+    classId: 'class-11b2',
+    name: 'Tạ Minh Khang',
+    code: 'HS1103',
+    gender: 'nam',
+    avatar: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=150&auto=format&fit=crop&q=80',
+    role: 'Học sinh',
+    parentName: 'Tạ Văn Bình',
+    parentPhone: '0972345888',
+    tx1: 6.0,
+    tx2: 6.5,
+    tx3: 6.0,
+    tx4: 7.0,
+    gk: 6.5,
+    ck: 6.8,
+    behaviorScore: 94,
+    starCount: 2,
+    notes: 'Phần hình học không gian còn yếu kỹ năng dựng hình'
+  },
+  // Lớp 10A1
+  {
+    id: 'hs-1001',
+    classId: 'class-10a1',
+    name: 'Dương Gia Bảo',
+    code: 'HS1001',
+    gender: 'nam',
+    avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80',
+    role: 'Cán sự Toán',
+    parentName: 'Dương Thành Long',
+    parentPhone: '0912111222',
+    tx1: 9.5,
+    tx2: 9.0,
+    tx3: 10.0,
+    tx4: 9.5,
+    gk: 9.6,
+    ck: 9.8,
+    behaviorScore: 120,
+    starCount: 15,
+    notes: 'Thủ khoa đầu vào khối 10 môn Toán, cực kỳ nhạy bén với bất đẳng thức'
+  },
+  {
+    id: 'hs-1002',
+    classId: 'class-10a1',
+    name: 'Hoàng Diệu Vy',
+    code: 'HS1002',
+    gender: 'nữ',
+    avatar: 'https://images.unsplash.com/photo-1548142813-c348350df52b?w=150&auto=format&fit=crop&q=80',
+    role: 'Học sinh',
+    parentName: 'Hoàng Hải Sơn',
+    parentPhone: '0988777666',
+    tx1: 8.0,
+    tx2: 8.5,
+    tx3: 8.5,
+    tx4: 9.0,
+    gk: 8.4,
+    ck: 8.6,
+    behaviorScore: 106,
+    starCount: 6,
+    notes: 'Làm bài tập vector và hệ thức lượng rất chắc chắn'
+  }
+];
+
+export const initialBehaviorRecords: BehaviorRecord[] = [
+  {
+    id: 'bh-01',
+    studentId: 'hs-1201',
+    studentName: 'Nguyễn Hoàng Minh',
+    classId: 'class-12a1',
+    type: 'positive',
+    points: 2,
+    reason: 'Lên bảng giải bài toán cực trị hàm chứa dấu giá trị tuyệt đối',
+    category: 'Lên bảng',
+    timestamp: new Date(Date.now() - 3600000 * 2).toISOString()
+  },
+  {
+    id: 'bh-02',
+    studentId: 'hs-1202',
+    studentName: 'Trần Mai Phương',
+    classId: 'class-12a1',
+    type: 'positive',
+    points: 1,
+    reason: 'Phát biểu đúng điều kiện tiếp xúc của hai đồ thị hàm số',
+    category: 'Phát biểu',
+    timestamp: new Date(Date.now() - 3600000 * 3).toISOString()
+  },
+  {
+    id: 'bh-03',
+    studentId: 'hs-1206',
+    studentName: 'Đặng Thảo Linh',
+    classId: 'class-12a1',
+    type: 'positive',
+    points: 2,
+    reason: 'Đưa ra lời giải ngắn gọn dùng phương pháp tọa độ hóa không gian',
+    category: 'Sáng tạo',
+    timestamp: new Date(Date.now() - 3600000 * 4).toISOString()
+  },
+  {
+    id: 'bh-04',
+    studentId: 'hs-1205',
+    studentName: 'Vũ Đăng Khoa',
+    classId: 'class-12a1',
+    type: 'negative',
+    points: -1,
+    reason: 'Chưa chuẩn bị bài tập phần tích phân từng phần về nhà',
+    category: 'BTVN',
+    timestamp: new Date(Date.now() - 3600000 * 24).toISOString()
+  },
+  {
+    id: 'bh-05',
+    studentId: 'hs-1207',
+    studentName: 'Bùi Đức Anh',
+    classId: 'class-12a1',
+    type: 'negative',
+    points: -1,
+    reason: 'Mất trật tự trong giờ chữa đề thi thử tốt nghiệp',
+    category: 'Kỷ luật',
+    timestamp: new Date(Date.now() - 3600000 * 26).toISOString()
+  },
+  {
+    id: 'bh-06',
+    studentId: 'hs-1201',
+    studentName: 'Nguyễn Hoàng Minh',
+    classId: 'class-12a1',
+    type: 'positive',
+    points: 1,
+    reason: 'Giúp đỡ bạn tổ 1 bấm máy tính Casio giải phương trình vi phân',
+    category: 'Sáng tạo',
+    timestamp: new Date(Date.now() - 3600000 * 48).toISOString()
+  }
+];
+
+export const initialQuestions: MathQuestion[] = [
+  {
+    id: 'q-01',
+    topic: 'Khảo sát hàm số',
+    grade: 12,
+    level: 'Thông hiểu',
+    content: 'Cho hàm số $y = \\frac{2x - 1}{x + 1}$. Tìm đường tiệm cận đứng và tiệm cận ngang của đồ thị hàm số.',
+    options: [
+      'Tiệm cận đứng: $x = -1$, tiệm cận ngang: $y = 2$',
+      'Tiệm cận đứng: $x = 1$, tiệm cận ngang: $y = -1$',
+      'Tiệm cận đứng: $x = 2$, tiệm cận ngang: $y = -1$',
+      'Tiệm cận đứng: $x = -1$, tiệm cận ngang: $y = \\frac{1}{2}$'
+    ],
+    correctAnswer: 0,
+    explanation: 'Ta có $\\lim_{x \\to -1^+} y = -\\infty$ nên $x = -1$ là TCĐ. $\\lim_{x \\to \\pm\\infty} \\frac{2x-1}{x+1} = 2$ nên $y = 2$ là TCN.'
+  },
+  {
+    id: 'q-02',
+    topic: 'Nguyên hàm - Tích phân',
+    grade: 12,
+    level: 'Vận dụng',
+    content: 'Tính tích phân $I = \\int_{0}^{1} x e^x dx$.',
+    options: [
+      '$I = 1$',
+      '$I = e - 1$',
+      '$I = e$',
+      '$I = 2$'
+    ],
+    correctAnswer: 0,
+    explanation: 'Đặt $\\begin{cases} u = x \\\\ dv = e^x dx \\end{cases} \\Rightarrow \\begin{cases} du = dx \\\\ v = e^x \\end{cases}$. Khi đó $I = \\left. x e^x \\right|_0^1 - \\int_0^1 e^x dx = e - (e - 1) = 1$.'
+  },
+  {
+    id: 'q-03',
+    topic: 'Hình học Oxyz',
+    grade: 12,
+    level: 'Nhận biết',
+    content: 'Trong không gian $Oxyz$, cho mặt phẳng $(P): 2x - 3y + z - 5 = 0$. Một vectơ pháp tuyến của $(P)$ là:',
+    options: [
+      '$\\vec{n} = (2; -3; 1)$',
+      '$\\vec{n} = (2; 3; 1)$',
+      '$\\vec{n} = (-2; 3; 1)$',
+      '$\\vec{n} = (2; -3; -5)$'
+    ],
+    correctAnswer: 0,
+    explanation: 'Từ phương trình tổng quát $Ax + By + Cz + D = 0$, vectơ pháp tuyến là $\\vec{n} = (A; B; C) = (2; -3; 1)$.'
+  },
+  {
+    id: 'q-04',
+    topic: 'Tổ hợp - Xác suất',
+    grade: 11,
+    level: 'Thông hiểu',
+    content: 'Một hộp chứa 5 viên bi đỏ và 4 viên bi xanh. Chọn ngẫu nhiên 3 viên bi. Xác suất để chọn được 2 viên bi đỏ và 1 viên bi xanh là:',
+    options: [
+      '$\\frac{10}{21}$',
+      '$\\frac{5}{14}$',
+      '$\\frac{20}{84}$',
+      '$\\frac{4}{9}$'
+    ],
+    correctAnswer: 0,
+    explanation: 'Không gian mẫu $n(\\Omega) = C_9^3 = 84$. Số cách chọn 2 bi đỏ và 1 bi xanh là $n(A) = C_5^2 \\cdot C_4^1 = 10 \\cdot 4 = 40$. Xác suất $P(A) = \\frac{40}{84} = \\frac{10}{21}$.'
+  },
+  {
+    id: 'q-05',
+    topic: 'Khảo sát hàm số',
+    grade: 12,
+    level: 'Vận dụng cao',
+    content: 'Có bao nhiêu giá trị nguyên của tham số $m \\in [-10; 10]$ để hàm số $y = \\frac{x^3}{3} - mx^2 + (m^2 - 4)x + 1$ đạt cực tiểu tại $x = 1$?',
+    options: [
+      '1',
+      '2',
+      '0',
+      '3'
+    ],
+    correctAnswer: 0,
+    explanation: 'Ta có $y\' = x^2 - 2mx + m^2 - 4$. Điều kiện cần $y\'(1) = 0 \\iff 1 - 2m + m^2 - 4 = 0 \\iff m^2 - 2m - 3 = 0 \\iff m = 3$ hoặc $m = -1$. Thử lại với $y\'\'(1) > 0$: $y\'\' = 2x - 2m$. Với $m = -1 \\Rightarrow y\'\'(1) = 4 > 0$ (thỏa mãn cực tiểu). Với $m = 3 \\Rightarrow y\'\'(1) = -4 < 0$ (cực đại, loại). Vậy chỉ có $m = -1$ duy nhất.'
+  }
+];
+
+export const initialSettings: AppSettings = {
+  apiKey: '',
+  selectedModel: 'gemini-3.8-flash',
+  soundEnabled: true,
+  autoSave: true,
+  defaultClassId: 'class-12a1'
+};
