@@ -1,3 +1,4 @@
+import { GoogleGenAI } from '@google/genai';
 import { Student, MathQuestion, BehaviorRecord } from '../types';
 import { calculateMathGPA, getAcademicRank } from './storage';
 
@@ -8,6 +9,12 @@ const FALLBACK_MODELS = [
   'gemini-3.5-flash-lite',
   'gemini-3.1-flash-lite',
   'gemini-2.5-flash',
+];
+
+// Model fallback cho Agent Platform API
+const AGENT_PLATFORM_FALLBACK_MODELS = [
+  'gemini-2.5-flash',
+  'gemini-2.5-flash-lite',
 ];
 
 // Validation: chấp nhận cả key AIzaSy... và AQ...
@@ -25,53 +32,113 @@ interface CallAIOptions {
   provider?: 'gemini' | 'agent-platform';
 }
 
+// Phân loại lỗi API
+function parseApiError(error: any): string {
+  const message = error?.message || error?.toString() || '';
+  const serialized = JSON.stringify(error) || '';
+
+  if (
+    serialized.includes('429') ||
+    message.includes('RESOURCE_EXHAUSTED') ||
+    message.toLowerCase().includes('quota')
+  ) return 'QUOTA_EXCEEDED';
+
+  if (
+    serialized.includes('503') ||
+    message.includes('UNAVAILABLE') ||
+    message.toLowerCase().includes('high demand') ||
+    message.toLowerCase().includes('overloaded')
+  ) return 'MODEL_OVERLOADED';
+
+  if (
+    serialized.includes('504') ||
+    message.includes('DEADLINE_EXCEEDED')
+  ) return 'MODEL_OVERLOADED';
+
+  if (
+    serialized.includes('404') ||
+    message.includes('NOT_FOUND')
+  ) return 'NOT_FOUND';
+
+  if (
+    message.includes('API_KEY_INVALID') ||
+    message.includes('401') ||
+    message.includes('PERMISSION_DENIED') ||
+    message.includes('403')
+  ) return 'INVALID_API_KEY';
+
+  return 'UNKNOWN';
+}
+
+// Sắp xếp model: model ưu tiên trước, sau đó fallback
+function getOrderedModels(selectedModel: string | undefined, provider: 'gemini' | 'agent-platform'): string[] {
+  const fallbackList = provider === 'agent-platform' ? AGENT_PLATFORM_FALLBACK_MODELS : FALLBACK_MODELS;
+  if (!selectedModel || !fallbackList.includes(selectedModel)) {
+    return selectedModel ? [selectedModel, ...fallbackList] : fallbackList;
+  }
+  return [selectedModel, ...fallbackList.filter(m => m !== selectedModel)];
+}
+
+// Tạo GoogleGenAI client — gọi trực tiếp từ browser, không cần backend proxy
+function createGoogleAiClient(apiKey: string, provider: 'gemini' | 'agent-platform' = 'gemini'): GoogleGenAI {
+  if (provider === 'agent-platform') {
+    return new GoogleGenAI({
+      vertexai: true,
+      apiKey,
+      httpOptions: { headers: { 'User-Agent': 'aistudio-build' } },
+    } as any);
+  }
+  return new GoogleGenAI({
+    apiKey,
+    httpOptions: { headers: { 'User-Agent': 'aistudio-build' } },
+  });
+}
+
 export async function callGemini(options: CallAIOptions): Promise<string> {
-  const modelsToTry = [
-    options.preferredModel || 'gemini-3.6-flash',
-    ...FALLBACK_MODELS.filter(m => m !== options.preferredModel)
-  ];
+  const apiKey = options.customApiKey;
+  if (!apiKey) {
+    throw new Error('Chưa có Gemini API Key. Vui lòng nhập API Key tại phần Cài đặt của ứng dụng.');
+  }
+
+  const aiProvider = options.provider || 'gemini';
+  const ai = createGoogleAiClient(apiKey, aiProvider);
+  const modelsToTry = getOrderedModels(options.preferredModel, aiProvider);
 
   let lastError = '';
 
-  for (const model of modelsToTry) {
+  for (const modelName of modelsToTry) {
     try {
-      const response = await fetch('/api/gemini/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          prompt: options.prompt,
+      const response = await ai.models.generateContent({
+        model: modelName,
+        contents: options.prompt,
+        config: options.systemInstruction ? {
           systemInstruction: options.systemInstruction,
-          model,
-          customApiKey: options.customApiKey || undefined,
-          provider: options.provider || 'gemini'
-        })
+        } : {}
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        const errorMsg = errorData.error || `HTTP ${response.status}`;
-        lastError = errorMsg;
-        // Auth/key issue: dừng ngay
-        if (response.status === 401 || response.status === 403) {
-          throw new Error('API Key không hợp lệ hoặc chưa được cấp quyền.');
-        }
-        // Quota exceeded: dừng ngay
-        if (response.status === 429) {
-          throw new Error('Đã hết quota hoặc vượt giới hạn tốc độ API. Vui lòng đợi rồi thử lại.');
-        }
-        // 503/500: thử model tiếp theo
+      const text = response.text || '';
+      if (text) {
+        return text;
+      }
+    } catch (error: any) {
+      lastError = error.message || 'Lỗi khi gọi Gemini AI';
+      const errorType = parseApiError(error);
+
+      // Lỗi auth/key: dừng ngay, không thử model khác
+      if (errorType === 'INVALID_API_KEY') {
+        throw new Error('API Key không hợp lệ hoặc chưa được cấp quyền.');
+      }
+      // Lỗi quota: dừng ngay
+      if (errorType === 'QUOTA_EXCEEDED') {
+        throw new Error('Đã hết quota hoặc vượt giới hạn tốc độ API. Vui lòng đợi rồi thử lại.');
+      }
+      // Model overloaded hoặc not found: thử model tiếp theo
+      if (errorType === 'MODEL_OVERLOADED' || errorType === 'NOT_FOUND') {
+        console.warn(`[${modelName}] ${errorType}, trying next model...`);
         continue;
       }
-
-      const data = await response.json();
-      if (data.text) {
-        return data.text;
-      }
-    } catch (err: any) {
-      lastError = err.message;
-      if (err.message.includes('API Key') || err.message.includes('quota')) {
-        throw err;
-      }
+      // Lỗi không xác định: dừng
+      break;
     }
   }
 
