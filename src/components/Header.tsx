@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { ClassRoom, Student } from '../types';
-import { importStudentsFromFile } from '../utils/importStudents';
+import { importStudentsFromFile, downloadStudentTemplate } from '../utils/importStudents';
 import { 
   GraduationCap, 
   Settings, 
@@ -16,7 +16,8 @@ import {
   Volume2, 
   VolumeX,
   UserCheck,
-  Upload
+  Upload,
+  Download
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -196,6 +197,13 @@ export const Header: React.FC<HeaderProps> = ({
 
         {isTeacherMode && (
           <div className="flex items-center gap-2">
+            <button
+              onClick={downloadStudentTemplate}
+              title="Tải file mẫu CSV"
+              className="flex items-center justify-center p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-transparent hover:border-blue-200"
+            >
+              <Download className="w-4 h-4" />
+            </button>
             <input
               type="file"
               accept=".csv,.json"

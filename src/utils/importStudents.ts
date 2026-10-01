@@ -131,3 +131,28 @@ export const importStudentsFromFile = async (file: File, classId: string): Promi
     reader.readAsText(file);
   });
 };
+
+export const downloadStudentTemplate = () => {
+  const headers = ['Tên học sinh', 'Mã học sinh', 'Giới tính', 'Chức vụ', 'Họ tên phụ huynh', 'Số điện thoại phụ huynh', 'Ghi chú'];
+  const sampleData1 = ['Nguyễn Văn A', 'HS-001', 'Nam', 'Học sinh', 'Nguyễn Văn B', '0901234567', 'Chăm chỉ'];
+  const sampleData2 = ['Trần Thị B', 'HS-002', 'Nữ', 'Lớp trưởng', 'Trần Văn C', '0987654321', ''];
+  
+  const csvContent = [
+    headers.join(','),
+    sampleData1.map(v => `"${v}"`).join(','),
+    sampleData2.map(v => `"${v}"`).join(',')
+  ].join('\n');
+
+  // Add BOM for UTF-8 Excel compatibility
+  const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  const url = URL.createObjectURL(blob);
+  
+  link.setAttribute('href', url);
+  link.setAttribute('download', 'mau_danh_sach_hoc_sinh.csv');
+  link.style.visibility = 'hidden';
+  
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
