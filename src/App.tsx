@@ -136,10 +136,33 @@ export default function App() {
     setStudents(prev => [...prev, ...newStudents]);
   };
 
+  // Delete student
+  const handleDeleteStudent = (studentId: string) => {
+    setStudents(prev => prev.filter(s => s.id !== studentId));
+    // Optional: also clean up behaviors if we want, but just removing student is fine for UI
+    setBehaviors(prev => prev.filter(b => b.studentId !== studentId));
+    setSelectedStudentForModal(null);
+  };
+
   // Add new class
   const handleAddClass = (newClass: ClassRoom) => {
     setClasses(prev => [...prev, newClass]);
     setSelectedClassId(newClass.id);
+  };
+
+  // Delete class
+  const handleDeleteClass = (classId: string) => {
+    setClasses(prev => {
+      const filteredClasses = prev.filter(c => c.id !== classId);
+      // Automatically select another class if available
+      if (selectedClassId === classId) {
+        setSelectedClassId(filteredClasses.length > 0 ? filteredClasses[0].id : '');
+      }
+      return filteredClasses;
+    });
+    // Remove all associated students and behaviors
+    setStudents(prev => prev.filter(s => s.classId !== classId));
+    setBehaviors(prev => prev.filter(b => b.classId !== classId));
   };
 
   // Save settings
@@ -186,6 +209,7 @@ export default function App() {
         onAddStudent={() => setIsAddStudentOpen(true)}
         onAddStudents={handleAddStudents}
         onAddClass={() => setIsAddClassOpen(true)}
+        onDeleteClass={handleDeleteClass}
         soundEnabled={soundEnabled}
         onToggleSound={() => setSoundEnabled(!soundEnabled)}
         isTeacherMode={isTeacherMode}
@@ -299,6 +323,7 @@ export default function App() {
             setSelectedStudentForModal(updated);
           }}
           onAddBehavior={handleAddBehavior}
+          onDeleteStudent={handleDeleteStudent}
           isTeacherMode={isTeacherMode}
         />
       )}

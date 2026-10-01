@@ -11,7 +11,8 @@ import {
   ThumbsUp, 
   AlertTriangle, 
   Save, 
-  MessageSquare 
+  MessageSquare,
+  Trash2
 } from 'lucide-react';
 
 interface StudentProfileModalProps {
@@ -20,6 +21,7 @@ interface StudentProfileModalProps {
   onClose: () => void;
   onUpdateStudent: (student: Student) => void;
   onAddBehavior: (records: BehaviorRecord[]) => void;
+  onDeleteStudent?: (studentId: string) => void;
   isTeacherMode: boolean;
 }
 
@@ -29,6 +31,7 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
   onClose,
   onUpdateStudent,
   onAddBehavior,
+  onDeleteStudent,
   isTeacherMode
 }) => {
   if (!student) return null;
@@ -214,11 +217,26 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
           </div>
         </div>
 
-        {/* Close Button */}
-        <div className="pt-2 flex justify-end">
+        {/* Footer actions */}
+        <div className="pt-2 flex items-center justify-between">
+          {isTeacherMode ? (
+            <button
+              onClick={() => {
+                if (window.confirm(`Bạn có chắc chắn muốn xóa học sinh ${student.name} khỏi lớp này không? Dữ liệu điểm và hành vi của học sinh cũng sẽ bị xóa.`)) {
+                  onDeleteStudent?.(student.id);
+                }
+              }}
+              className="flex items-center gap-1.5 px-4 py-2 text-rose-600 hover:bg-rose-50 rounded-xl text-xs font-semibold transition-colors"
+            >
+              <Trash2 className="w-4 h-4" />
+              <span>Xóa học sinh</span>
+            </button>
+          ) : (
+            <div />
+          )}
           <button
             onClick={onClose}
-            className="px-5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold"
+            className="px-5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-colors"
           >
             Đóng
           </button>

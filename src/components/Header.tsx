@@ -17,7 +17,8 @@ import {
   VolumeX,
   UserCheck,
   Upload,
-  Download
+  Download,
+  Trash2
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -30,6 +31,7 @@ interface HeaderProps {
   onAddStudent: () => void;
   onAddStudents?: (students: Student[]) => void;
   onAddClass: () => void;
+  onDeleteClass?: (classId: string) => void;
   soundEnabled: boolean;
   onToggleSound: () => void;
   isTeacherMode: boolean;
@@ -47,6 +49,7 @@ export const Header: React.FC<HeaderProps> = ({
   onAddStudent,
   onAddStudents,
   onAddClass,
+  onDeleteClass,
   soundEnabled,
   onToggleSound,
   isTeacherMode,
@@ -185,13 +188,28 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
 
           {isTeacherMode && (
-            <button
-              onClick={onAddClass}
-              className="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1 hover:underline"
-            >
-              <PlusCircle className="w-3.5 h-3.5" />
-              Thêm lớp
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={onAddClass}
+                className="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1 hover:underline"
+              >
+                <PlusCircle className="w-3.5 h-3.5" />
+                Thêm lớp
+              </button>
+              {currentClass && (
+                <button
+                  onClick={() => {
+                    if (window.confirm(`Bạn có chắc chắn muốn xóa lớp "${currentClass.name}" không?\nMọi dữ liệu (học sinh, điểm, rèn luyện) của lớp này sẽ bị xóa vĩnh viễn.`)) {
+                      onDeleteClass?.(currentClass.id);
+                    }
+                  }}
+                  className="text-xs text-rose-500 hover:text-rose-700 font-medium flex items-center gap-1 hover:underline"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Xóa lớp
+                </button>
+              )}
+            </div>
           )}
         </div>
 
