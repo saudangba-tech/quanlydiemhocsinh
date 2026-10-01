@@ -90,41 +90,61 @@ export const Gradebook: React.FC<GradebookProps> = ({
     setEditingScore(null);
   };
 
-  // Export to Excel using SheetJS
+  // Export to Excel (CSV format compatible with Excel)
   const exportToExcel = () => {
-    if (typeof window === 'undefined' || !window.XLSX) {
-      alert('Đang tải thư viện Excel, vui lòng thử lại sau giây lát!');
-      return;
-    }
+    const headers = [
+      'STT', 'Mã học sinh', 'Họ và tên', 'Giới tính', 
+      'ĐĐGtx 1 (Miệng)', 'ĐĐGtx 2 (15p-1)', 'ĐĐGtx 3 (15p-2)', 'ĐĐGtx 4 (Dự án)', 
+      'ĐĐGgk (Hệ số 2)', 'ĐĐGck (Hệ số 3)', 'ĐTB Môn Toán', 'Xếp loại học lực', 
+      'Điểm rèn luyện', 'Số sao tích lũy', 'Ghi chú'
+    ];
 
     const rows = classStudents.map((s, idx) => {
       const gpa = calculateMathGPA(s);
       const rank = getAcademicRank(gpa);
-      return {
-        'STT': idx + 1,
-        'Mã học sinh': s.code,
-        'Họ và tên': s.name,
-        'Giới tính': s.gender === 'nam' ? 'Nam' : 'Nữ',
-        'ĐĐGtx 1 (Miệng)': s.tx1 ?? '',
-        'ĐĐGtx 2 (15p-1)': s.tx2 ?? '',
-        'ĐĐGtx 3 (15p-2)': s.tx3 ?? '',
-        'ĐĐGtx 4 (Dự án)': s.tx4 ?? '',
-        'ĐĐGgk (Hệ số 2)': s.gk ?? '',
-        'ĐĐGck (Hệ số 3)': s.ck ?? '',
-        'ĐTB Môn Toán': gpa ?? '',
-        'Xếp loại học lực': rank.text,
-        'Điểm rèn luyện': s.behaviorScore,
-        'Số sao tích lũy': s.starCount,
-        'Ghi chú': s.notes
-      };
+      return [
+        idx + 1,
+        s.code,
+        s.name,
+        s.gender === 'nam' ? 'Nam' : 'Nữ',
+        s.tx1 ?? '',
+        s.tx2 ?? '',
+        s.tx3 ?? '',
+        s.tx4 ?? '',
+        s.gk ?? '',
+        s.ck ?? '',
+        gpa ?? '',
+        rank.text,
+        s.behaviorScore,
+        s.starCount,
+        s.notes || ''
+      ];
     });
 
-    const worksheet = window.XLSX.utils.json_to_sheet(rows);
-    const workbook = window.XLSX.utils.book_new();
-    window.XLSX.utils.book_append_sheet(workbook, worksheet, 'SoDiemToan_' + classNameStr);
+    // Create CSV content
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(v => {
+        // Escape quotes and wrap in quotes for robust CSV parsing
+        const val = String(v).replace(/"/g, '""');
+        return `"${val}"`;
+      }).join(','))
+    ].join('\n');
 
-    const filename = `Bang_Diem_Mon_Toan_${classNameStr.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.xlsx`;
-    window.XLSX.writeFile(workbook, filename);
+    // Add BOM for UTF-8 Excel compatibility
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    const filename = `Bang_Diem_Mon_Toan_${classNameStr.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.csv`;
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const exportToWord = async () => {
