@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Student } from '../types';
 import { calculateMathGPA, getAcademicRank } from '../services/storage';
 import { 
@@ -11,10 +11,12 @@ import {
   FileSpreadsheet,
   Printer,
   Sparkles,
-  FileText
+  FileText,
+  Upload
 } from 'lucide-react';
 import { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType } from 'docx';
 import { saveAs } from 'file-saver';
+import * as XLSX from 'xlsx';
 
 interface GradebookProps {
   students: Student[];
@@ -38,6 +40,7 @@ export const Gradebook: React.FC<GradebookProps> = ({
   const [sortAsc, setSortAsc] = useState(true);
   const [editingScore, setEditingScore] = useState<{ studentId: string; field: keyof Student } | null>(null);
   const [editValue, setEditValue] = useState<string>('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const classStudents = students.filter(s => s.classId === selectedClassId);
 
@@ -90,41 +93,138 @@ export const Gradebook: React.FC<GradebookProps> = ({
     setEditingScore(null);
   };
 
-  // Export to Excel using SheetJS
-  const exportToExcel = () => {
-    if (typeof window === 'undefined' || !window.XLSX) {
-      alert('Đang tải thư viện Excel, vui lòng thử lại sau giây lát!');
-      return;
+  const parseGrade = (val: any) => {
+    if (val === undefined || val === null || val === '') return undefined;
+    const num = parseFloat(String(val).replace(',', '.'));
+    if (isNaN(num) || num < 0 || num > 10) return undefined;
+    return num;
+  };
+
+  const processImportedData = (data: any[]) => {
+    const updatedStudents = [...students];
+    let updatedCount = 0;
+
+    data.forEach((row) => {
+      const studentCode = row['Mã học sinh'] || row['Mã HS'] || row['code'] || row['Mã Học Sinh'] || row['Mã Học sinh'];
+      if (!studentCode) return;
+
+      const studentIndex = updatedStudents.findIndex(s => s.code.toLowerCase() === String(studentCode).trim().toLowerCase() && s.classId === selectedClassId);
+      
+      if (studentIndex !== -1) {
+        const s = updatedStudents[studentIndex];
+        const tx1 = parseGrade(row['ĐĐGtx 1 (Miệng)'] ?? row['Tx 1'] ?? row['ĐĐGtx 1']);
+        const tx2 = parseGrade(row['ĐĐGtx 2 (15p-1)'] ?? row['Tx 2'] ?? row['ĐĐGtx 2']);
+        const tx3 = parseGrade(row['ĐĐGtx 3 (15p-2)'] ?? row['Tx 3'] ?? row['ĐĐGtx 3']);
+        const tx4 = parseGrade(row['ĐĐGtx 4 (Dự án)'] ?? row['Tx 4'] ?? row['ĐĐGtx 4']);
+        const gk = parseGrade(row['ĐĐGgk (Hệ số 2)'] ?? row['Giữa kỳ'] ?? row['ĐĐGgk']);
+        const ck = parseGrade(row['ĐĐGck (Hệ số 3)'] ?? row['Cuối kỳ'] ?? row['ĐĐGck']);
+        
+        const behaviorScoreRaw = row['Điểm rèn luyện'];
+        const behaviorScore = behaviorScoreRaw !== undefined ? parseInt(String(behaviorScoreRaw)) : s.behaviorScore;
+        const notes = row['Ghi chú'] !== undefined ? String(row['Ghi chú']) : s.notes;
+
+        updatedStudents[studentIndex] = {
+          ...s,
+          tx1: tx1 !== undefined ? tx1 : s.tx1,
+          tx2: tx2 !== undefined ? tx2 : s.tx2,
+          tx3: tx3 !== undefined ? tx3 : s.tx3,
+          tx4: tx4 !== undefined ? tx4 : s.tx4,
+          gk: gk !== undefined ? gk : s.gk,
+          ck: ck !== undefined ? ck : s.ck,
+          behaviorScore: !isNaN(behaviorScore) ? behaviorScore : s.behaviorScore,
+          notes: notes !== undefined ? (notes === 'undefined' ? '' : notes) : s.notes,
+        };
+        updatedCount++;
+      }
+    });
+
+    if (updatedCount > 0) {
+      onUpdateStudents(updatedStudents);
+      alert(`Đã cập nhật điểm cho ${updatedCount} học sinh thành công!`);
+    } else {
+      alert('Không tìm thấy học sinh nào hoặc định dạng file không khớp. Vui lòng đảm bảo cột "Mã học sinh" tồn tại và khớp với dữ liệu.');
     }
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const bstr = evt.target?.result;
+        const wb = XLSX.read(bstr, { type: 'binary' });
+        const wsname = wb.SheetNames[0];
+        const ws = wb.Sheets[wsname];
+        const data = XLSX.utils.sheet_to_json(ws);
+        processImportedData(data);
+      } catch (error) {
+        alert("Lỗi khi đọc file Excel. Vui lòng kiểm tra lại định dạng.");
+      }
+    };
+    reader.readAsBinaryString(file);
+    
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  // Export to Excel (CSV format compatible with Excel)
+  const exportToExcel = () => {
+    const headers = [
+      'STT', 'Mã học sinh', 'Họ và tên', 'Giới tính', 
+      'ĐĐGtx 1 (Miệng)', 'ĐĐGtx 2 (15p-1)', 'ĐĐGtx 3 (15p-2)', 'ĐĐGtx 4 (Dự án)', 
+      'ĐĐGgk (Hệ số 2)', 'ĐĐGck (Hệ số 3)', 'ĐTB Môn Toán', 'Xếp loại học lực', 
+      'Điểm rèn luyện', 'Số sao tích lũy', 'Ghi chú'
+    ];
 
     const rows = classStudents.map((s, idx) => {
       const gpa = calculateMathGPA(s);
       const rank = getAcademicRank(gpa);
-      return {
-        'STT': idx + 1,
-        'Mã học sinh': s.code,
-        'Họ và tên': s.name,
-        'Giới tính': s.gender === 'nam' ? 'Nam' : 'Nữ',
-        'ĐĐGtx 1 (Miệng)': s.tx1 ?? '',
-        'ĐĐGtx 2 (15p-1)': s.tx2 ?? '',
-        'ĐĐGtx 3 (15p-2)': s.tx3 ?? '',
-        'ĐĐGtx 4 (Dự án)': s.tx4 ?? '',
-        'ĐĐGgk (Hệ số 2)': s.gk ?? '',
-        'ĐĐGck (Hệ số 3)': s.ck ?? '',
-        'ĐTB Môn Toán': gpa ?? '',
-        'Xếp loại học lực': rank.text,
-        'Điểm rèn luyện': s.behaviorScore,
-        'Số sao tích lũy': s.starCount,
-        'Ghi chú': s.notes
-      };
+      return [
+        idx + 1,
+        s.code,
+        s.name,
+        s.gender === 'nam' ? 'Nam' : 'Nữ',
+        s.tx1 ?? '',
+        s.tx2 ?? '',
+        s.tx3 ?? '',
+        s.tx4 ?? '',
+        s.gk ?? '',
+        s.ck ?? '',
+        gpa ?? '',
+        rank.text,
+        s.behaviorScore,
+        s.starCount,
+        s.notes || ''
+      ];
     });
 
-    const worksheet = window.XLSX.utils.json_to_sheet(rows);
-    const workbook = window.XLSX.utils.book_new();
-    window.XLSX.utils.book_append_sheet(workbook, worksheet, 'SoDiemToan_' + classNameStr);
+    // Create CSV content
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(v => {
+        // Escape quotes and wrap in quotes for robust CSV parsing
+        const val = String(v).replace(/"/g, '""');
+        return `"${val}"`;
+      }).join(','))
+    ].join('\n');
 
-    const filename = `Bang_Diem_Mon_Toan_${classNameStr.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.xlsx`;
-    window.XLSX.writeFile(workbook, filename);
+    // Add BOM for UTF-8 Excel compatibility
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    const filename = `Bang_Diem_Mon_Toan_${classNameStr.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.csv`;
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const exportToWord = async () => {
@@ -236,6 +336,22 @@ export const Gradebook: React.FC<GradebookProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
+          <input 
+            type="file" 
+            accept=".xlsx, .xls, .csv" 
+            ref={fileInputRef} 
+            onChange={handleFileUpload} 
+            className="hidden" 
+          />
+          {isTeacherMode && (
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="flex items-center gap-1.5 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-2xs transition-colors"
+            >
+              <Upload className="w-4 h-4" />
+              <span>Nhập điểm</span>
+            </button>
+          )}
           <button
             onClick={exportToExcel}
             className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-2xs transition-colors"
