@@ -77,7 +77,7 @@ export const HallOfFame: React.FC<HallOfFameProps> = ({
     }
     
     // Add full list on next slide
-    const rows = rankedStudents.map((item, idx) => {
+    const rows: any[] = rankedStudents.map((item, idx) => {
       return [
         { text: String(idx + 1) },
         { text: item.student.name },

@@ -443,6 +443,8 @@ export const initialQuestions: MathQuestion[] = [
 
 export const initialSettings: AppSettings = {
   apiKey: '',
+  agentPlatformApiKey: '',
+  aiProvider: 'gemini',
   selectedModel: 'gemini-3.8-flash',
   soundEnabled: true,
   autoSave: true,

@@ -3,7 +3,11 @@ import { useAuth } from '../contexts/AuthContext';
 import { Sparkles, LogIn } from 'lucide-react';
 
 export const LoginScreen: React.FC = () => {
-  const { login } = useAuth();
+  const { user } = useAuth();
+  const login = () => {
+    // App uses default user now
+    window.location.reload();
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 relative overflow-hidden">
