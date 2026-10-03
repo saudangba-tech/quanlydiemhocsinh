@@ -343,15 +343,13 @@ export const Gradebook: React.FC<GradebookProps> = ({
             onChange={handleFileUpload} 
             className="hidden" 
           />
-          {isTeacherMode && (
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="flex items-center gap-1.5 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-2xs transition-colors"
-            >
-              <Upload className="w-4 h-4" />
-              <span>Nhập điểm</span>
-            </button>
-          )}
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-2xs transition-colors"
+          >
+            <FileSpreadsheet className="w-4 h-4" />
+            <span>Nhập Excel</span>
+          </button>
           <button
             onClick={exportToExcel}
             className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-2xs transition-colors"
