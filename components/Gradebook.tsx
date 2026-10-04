@@ -153,8 +153,8 @@ export const Gradebook: React.FC<GradebookProps> = ({
     const reader = new FileReader();
     reader.onload = (evt) => {
       try {
-        const bstr = evt.target?.result;
-        const wb = XLSX.read(bstr, { type: 'binary' });
+        const arrayBuffer = evt.target?.result as ArrayBuffer;
+        const wb = XLSX.read(arrayBuffer, { type: 'array' });
         const wsname = wb.SheetNames[0];
         const ws = wb.Sheets[wsname];
         const data = XLSX.utils.sheet_to_json(ws);
@@ -163,14 +163,14 @@ export const Gradebook: React.FC<GradebookProps> = ({
         alert("Lỗi khi đọc file Excel. Vui lòng kiểm tra lại định dạng.");
       }
     };
-    reader.readAsBinaryString(file);
+    reader.readAsArrayBuffer(file);
     
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
   };
 
-  // Export to Excel (CSV format compatible with Excel)
+  // Export to Excel (Real XLSX)
   const exportToExcel = () => {
     const headers = [
       'STT', 'Mã học sinh', 'Họ và tên', 'Giới tính', 
@@ -201,30 +201,40 @@ export const Gradebook: React.FC<GradebookProps> = ({
       ];
     });
 
-    // Create CSV content
-    const csvContent = [
-      headers.join(','),
-      ...rows.map(row => row.map(v => {
-        // Escape quotes and wrap in quotes for robust CSV parsing
-        const val = String(v).replace(/"/g, '""');
-        return `"${val}"`;
-      }).join(','))
-    ].join('\n');
+    const worksheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "BangDiem");
+    
+    const filename = `Bang_Diem_Mon_Toan_${classNameStr.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+    XLSX.writeFile(workbook, filename);
+  };
 
-    // Add BOM for UTF-8 Excel compatibility
-    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
+  const downloadTemplate = () => {
+    const headers = [
+      'Mã học sinh', 'Họ và tên',
+      'ĐĐGtx 1 (Miệng)', 'ĐĐGtx 2 (15p-1)', 'ĐĐGtx 3 (15p-2)', 'ĐĐGtx 4 (Dự án)', 
+      'ĐĐGgk (Hệ số 2)', 'ĐĐGck (Hệ số 3)', 'Điểm rèn luyện', 'Ghi chú'
+    ];
     
-    const filename = `Bang_Diem_Mon_Toan_${classNameStr.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.csv`;
+    const rows = classStudents.map(s => [
+      s.code,
+      s.name,
+      s.tx1 ?? '',
+      s.tx2 ?? '',
+      s.tx3 ?? '',
+      s.tx4 ?? '',
+      s.gk ?? '',
+      s.ck ?? '',
+      s.behaviorScore,
+      s.notes || ''
+    ]);
+
+    const worksheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "MauNhapDiem");
     
-    link.setAttribute('href', url);
-    link.setAttribute('download', filename);
-    link.style.visibility = 'hidden';
-    
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const filename = `Mau_Nhap_Diem_${classNameStr.replace(/\s+/g, '_')}.xlsx`;
+    XLSX.writeFile(workbook, filename);
   };
 
   const exportToWord = async () => {
@@ -344,10 +354,17 @@ export const Gradebook: React.FC<GradebookProps> = ({
             className="hidden" 
           />
           <button
+            onClick={downloadTemplate}
+            className="flex items-center gap-1.5 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-2xs transition-colors"
+          >
+            <Download className="w-4 h-4" />
+            <span className="hidden sm:inline">Tải file mẫu</span>
+          </button>
+          <button
             onClick={() => fileInputRef.current?.click()}
             className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-2xs transition-colors"
           >
-            <FileSpreadsheet className="w-4 h-4" />
+            <Upload className="w-4 h-4" />
             <span>Nhập Excel</span>
           </button>
           <button
@@ -355,7 +372,7 @@ export const Gradebook: React.FC<GradebookProps> = ({
             className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-2xs transition-colors"
           >
             <FileSpreadsheet className="w-4 h-4" />
-            <span>Xuất Excel</span>
+            <span className="hidden sm:inline">Xuất Excel</span>
           </button>
           <button
             onClick={exportToWord}
