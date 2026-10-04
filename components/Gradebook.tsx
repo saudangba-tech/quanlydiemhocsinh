@@ -346,41 +346,45 @@ export const Gradebook: React.FC<GradebookProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
-          <input 
-            type="file" 
-            accept=".xlsx, .xls, .csv" 
-            ref={fileInputRef} 
-            onChange={handleFileUpload} 
-            className="hidden" 
-          />
-          <button
-            onClick={downloadTemplate}
-            className="flex items-center gap-1.5 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-2xs transition-colors"
-          >
-            <Download className="w-4 h-4" />
-            <span className="hidden sm:inline">Tải file mẫu</span>
-          </button>
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-2xs transition-colors"
-          >
-            <Upload className="w-4 h-4" />
-            <span>Nhập Excel</span>
-          </button>
-          <button
-            onClick={exportToExcel}
-            className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-2xs transition-colors"
-          >
-            <FileSpreadsheet className="w-4 h-4" />
-            <span className="hidden sm:inline">Xuất Excel</span>
-          </button>
-          <button
-            onClick={exportToWord}
-            className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow-2xs transition-colors"
-          >
-            <FileText className="w-4 h-4" />
-            <span>Xuất Word</span>
-          </button>
+          {isTeacherMode && (
+            <>
+              <input 
+                type="file" 
+                accept=".xlsx, .xls, .csv" 
+                ref={fileInputRef} 
+                onChange={handleFileUpload} 
+                className="hidden" 
+              />
+              <button
+                onClick={downloadTemplate}
+                className="flex items-center gap-1.5 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-2xs transition-colors"
+              >
+                <Download className="w-4 h-4" />
+                <span className="hidden sm:inline">Tải file mẫu</span>
+              </button>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-2xs transition-colors"
+              >
+                <Upload className="w-4 h-4" />
+                <span>Nhập Excel</span>
+              </button>
+              <button
+                onClick={exportToExcel}
+                className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-2xs transition-colors"
+              >
+                <FileSpreadsheet className="w-4 h-4" />
+                <span className="hidden sm:inline">Xuất Excel</span>
+              </button>
+              <button
+                onClick={exportToWord}
+                className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow-2xs transition-colors"
+              >
+                <FileText className="w-4 h-4" />
+                <span>Xuất Word</span>
+              </button>
+            </>
+          )}
           <button
             onClick={handlePrint}
             className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition-colors"
